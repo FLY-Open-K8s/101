@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: http-probe
+  name: http-3-pod-probe
 spec:
   containers:
-    - name: http-probe
+    - name: http-3-pod-probe
       image: nginx
       readinessProbe:
         httpGet:
-          ### this probe will fail with 404 error code
+          ### this 3-pod-probe will fail with 404 error code
           ### only httpcode between 200-400 is retreated as success
           path: /healthz
           port: 80

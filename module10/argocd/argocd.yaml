@@ -32,7 +32,7 @@ spec:
       name: v1alpha1
       schema:
         openAPIV3Schema:
-          description: Application is a definition of Application resource.
+          description: Application is a definition of Application 2-pod-resource.
           properties:
             apiVersion:
               description: 'APIVersion defines the versioned schema of this representation
@@ -40,7 +40,7 @@ spec:
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this
+              description: 'Kind is a string value representing the REST 2-pod-resource this
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
               type: string
@@ -401,7 +401,7 @@ spec:
                             force:
                               description: Force indicates whether or not to supply
                                 the --force flag to `kubectl apply`. The --force flag
-                                deletes and re-create the resource, when PATCH encounters
+                                deletes and re-create the 2-pod-resource, when PATCH encounters
                                 conflict and has retried for 5 times.
                               type: boolean
                           type: object
@@ -412,7 +412,7 @@ spec:
                             force:
                               description: Force indicates whether or not to supply
                                 the --force flag to `kubectl apply`. The --force flag
-                                deletes and re-create the resource, when PATCH encounters
+                                deletes and re-create the 2-pod-resource, when PATCH encounters
                                 conflict and has retried for 5 times.
                               type: boolean
                           type: object
@@ -446,7 +446,7 @@ spec:
                   description: IgnoreDifferences is a list of resources and their fields
                     which should be ignored during comparison
                   items:
-                    description: ResourceIgnoreDifferences contains resource filter
+                    description: ResourceIgnoreDifferences contains 2-pod-resource filter
                       and list of json paths which should be ignored during comparison
                       with live state.
                     properties:
@@ -834,7 +834,7 @@ spec:
                       type: string
                     status:
                       description: Status holds the status code of the application or
-                        resource
+                        2-pod-resource
                       type: string
                   type: object
                 history:
@@ -1508,7 +1508,7 @@ spec:
                                     force:
                                       description: Force indicates whether or not to
                                         supply the --force flag to `kubectl apply`.
-                                        The --force flag deletes and re-create the resource,
+                                        The --force flag deletes and re-create the 2-pod-resource,
                                         when PATCH encounters conflict and has retried
                                         for 5 times.
                                       type: boolean
@@ -1520,7 +1520,7 @@ spec:
                                     force:
                                       description: Force indicates whether or not to
                                         supply the --force flag to `kubectl apply`.
-                                        The --force flag deletes and re-create the resource,
+                                        The --force flag deletes and re-create the 2-pod-resource,
                                         when PATCH encounters conflict and has retried
                                         for 5 times.
                                       type: boolean
@@ -1544,17 +1544,17 @@ spec:
                       properties:
                         resources:
                           description: Resources contains a list of sync result items
-                            for each individual resource in a sync operation
+                            for each individual 2-pod-resource in a sync operation
                           items:
                             description: ResourceResult holds the operation result details
-                              of a specific resource
+                              of a specific 2-pod-resource
                             properties:
                               group:
-                                description: Group specifies the API group of the resource
+                                description: Group specifies the API group of the 2-pod-resource
                                 type: string
                               hookPhase:
                                 description: HookPhase contains the state of any operation
-                                  associated with this resource OR hook This can also
+                                  associated with this 2-pod-resource OR hook This can also
                                   contain values for non-hook resources.
                                 type: string
                               hookType:
@@ -1562,18 +1562,18 @@ spec:
                                   Empty for non-hook resources
                                 type: string
                               kind:
-                                description: Kind specifies the API kind of the resource
+                                description: Kind specifies the API kind of the 2-pod-resource
                                 type: string
                               message:
                                 description: Message contains an informational or error
                                   message for the last sync OR operation
                                 type: string
                               name:
-                                description: Name specifies the name of the resource
+                                description: Name specifies the name of the 2-pod-resource
                                 type: string
                               namespace:
                                 description: Namespace specifies the target namespace
-                                  of the resource
+                                  of the 2-pod-resource
                                 type: string
                               status:
                                 description: Status holds the final result of the sync.
@@ -1586,7 +1586,7 @@ spec:
                                 type: string
                               version:
                                 description: Version specifies the API version of the
-                                  resource
+                                  2-pod-resource
                                 type: string
                             required:
                               - group
@@ -1866,13 +1866,13 @@ spec:
                     this application
                   items:
                     description: 'ResourceStatus holds the current sync and health status
-                    of a resource TODO: describe members of this type'
+                    of a 2-pod-resource TODO: describe members of this type'
                     properties:
                       group:
                         type: string
                       health:
                         description: HealthStatus contains information about the currently
-                          observed health state of an application or resource
+                          observed health state of an application or 2-pod-resource
                         properties:
                           message:
                             description: Message is a human-readable informational message
@@ -1880,7 +1880,7 @@ spec:
                             type: string
                           status:
                             description: Status holds the status code of the application
-                              or resource
+                              or 2-pod-resource
                             type: string
                         type: object
                       hook:
@@ -2242,7 +2242,7 @@ spec:
         openAPIV3Schema:
           description: 'AppProject provides a logical grouping of applications, providing
           controls for: * where the apps may deploy to (cluster whitelist) * what
-          may be deployed (repository whitelist, resource whitelist/blacklist) * who
+          may be deployed (repository whitelist, 2-pod-resource whitelist/blacklist) * who
           can access these applications (roles, OIDC group claims bindings) * and
           what they can do (RBAC policies) * automation access to these roles (JWT
           tokens)'
@@ -2253,7 +2253,7 @@ spec:
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this
+              description: 'Kind is a string value representing the REST 2-pod-resource this
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
               type: string
@@ -2363,7 +2363,7 @@ spec:
                       description: Ignore contains a list of resources that are to be
                         excluded from orphaned resources monitoring
                       items:
-                        description: OrphanedResourceKey is a reference to a resource
+                        description: OrphanedResourceKey is a reference to a 2-pod-resource
                           to be ignored from
                         properties:
                           group:

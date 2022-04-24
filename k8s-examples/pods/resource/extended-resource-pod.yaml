@@ -1,0 +1,16 @@
+#为容器分派扩展资源
+#https://kubernetes.io/zh/docs/tasks/administer-cluster/extended-resource-node/
+#https://kubernetes.io/zh/docs/tasks/configure-pod-container/extended-resource/
+apiVersion: v1
+kind: Pod
+metadata:
+  name: extended-2-pod-resource-demo
+spec:
+  containers:
+  - name: extended-2-pod-resource-demo-ctr
+    image: nginx
+    resources:
+      requests:
+        example.com/dongle: 3
+      limits:
+        example.com/dongle: 3

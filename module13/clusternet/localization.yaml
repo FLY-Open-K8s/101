@@ -17,7 +17,7 @@ spec:
   overrides: # defines all the overrides to be processed with
     - name: scale-and-add-annotations
       type: JSONPatch
-      # Value is a YAML/JSON format patch that provides JSONPatch to current resource defined by feed.
+      # Value is a YAML/JSON format patch that provides JSONPatch to current 2-pod-resource defined by feed.
       # This patch sets replicas to 3 and adds a new annotation "foo=bar".
       value: |-
         [

@@ -1743,7 +1743,7 @@ metadata:
     app.kubernetes.io/part-of: tekton-pipelines
     # tekton.dev/release value replaced with inputs.params.versionTag in pipeline/tekton/publish.yaml
     pipeline.tekton.dev/release: "v0.27.2"
-    # labels below are related to istio and should not be used for resource lookup
+    # labels below are related to istio and should not be used for 2-pod-resource lookup
     version: "v0.27.2"
 spec:
   replicas: 1
@@ -1763,7 +1763,7 @@ spec:
         app.kubernetes.io/part-of: tekton-pipelines
         # tekton.dev/release value replaced with inputs.params.versionTag in pipeline/tekton/publish.yaml
         pipeline.tekton.dev/release: "v0.27.2"
-        # labels below are related to istio and should not be used for resource lookup
+        # labels below are related to istio and should not be used for 2-pod-resource lookup
         app: tekton-pipelines-controller
         version: "v0.27.2"
     spec:
@@ -1879,7 +1879,7 @@ metadata:
     app.kubernetes.io/part-of: tekton-pipelines
     # tekton.dev/release value replaced with inputs.params.versionTag in pipeline/tekton/publish.yaml
     pipeline.tekton.dev/release: "v0.27.2"
-    # labels below are related to istio and should not be used for resource lookup
+    # labels below are related to istio and should not be used for 2-pod-resource lookup
     app: tekton-pipelines-controller
     version: "v0.27.2"
   name: tekton-pipelines-controller
@@ -1926,7 +1926,7 @@ metadata:
     app.kubernetes.io/part-of: tekton-pipelines
     # tekton.dev/release value replaced with inputs.params.versionTag in pipeline/tekton/publish.yaml
     pipeline.tekton.dev/release: "v0.27.2"
-    # labels below are related to istio and should not be used for resource lookup
+    # labels below are related to istio and should not be used for 2-pod-resource lookup
     version: "v0.27.2"
 spec:
   minReplicas: 1
@@ -1972,7 +1972,7 @@ metadata:
     app.kubernetes.io/part-of: tekton-pipelines
     # tekton.dev/release value replaced with inputs.params.versionTag in pipeline/tekton/publish.yaml
     pipeline.tekton.dev/release: "v0.27.2"
-    # labels below are related to istio and should not be used for resource lookup
+    # labels below are related to istio and should not be used for 2-pod-resource lookup
     version: "v0.27.2"
 spec:
   replicas: 1
@@ -1992,7 +1992,7 @@ spec:
         app.kubernetes.io/part-of: tekton-pipelines
         # tekton.dev/release value replaced with inputs.params.versionTag in pipeline/tekton/publish.yaml
         pipeline.tekton.dev/release: "v0.27.2"
-        # labels below are related to istio and should not be used for resource lookup
+        # labels below are related to istio and should not be used for 2-pod-resource lookup
         app: tekton-pipelines-webhook
         version: "v0.27.2"
     spec:
@@ -2095,7 +2095,7 @@ metadata:
     app.kubernetes.io/part-of: tekton-pipelines
     # tekton.dev/release value replaced with inputs.params.versionTag in pipeline/tekton/publish.yaml
     pipeline.tekton.dev/release: "v0.27.2"
-    # labels below are related to istio and should not be used for resource lookup
+    # labels below are related to istio and should not be used for 2-pod-resource lookup
     app: tekton-pipelines-webhook
     version: "v0.27.2"
   name: tekton-pipelines-webhook
