@@ -1,7 +1,7 @@
 admin:
   address:
     socket_address: { address: 127.0.0.1, port_value: 9901 }
-
+#Didn't find a registered implementation for 'envoy.filters.http.router' with type URL: ''
 static_resources:
   listeners:
     - name: listener_0
@@ -22,8 +22,8 @@ static_resources:
                       routes:
                         - match: { prefix: "/" }
                           route: { cluster: some_service }
-                http_filters:
-                  - name: envoy.filters.http.router
+#                http_filters:
+#                  - name: envoy.filters.http.router
   clusters:
     - name: some_service
       connect_timeout: 0.25s

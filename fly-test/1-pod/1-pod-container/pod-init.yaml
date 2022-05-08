@@ -18,4 +18,4 @@ spec:
     - name: init-mydb
       #  2. 第二个等待 mydb 启动
       image: busybox:1.28
-      command: ['sh', '-c', "until nslookup mydb-pod-init.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for myservice-pod-init; sleep 2; done"]
+      command: ['sh', '-c', "until nslookup mydb-pod-init.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb-pod-init; sleep 2; done"]
