@@ -13,8 +13,5 @@ kubectl get configmap -oyaml game-config
 
 ```sh
 kubectl create configmap special-config --from-literal=special.how=very --from-literal=special.type=charm
-#downward api pod
-kubectl create -f downward-api-pod.yaml
-kubectl get po downward-api-pod
-kubectl logs -f downward-api-pod
+
 ```
