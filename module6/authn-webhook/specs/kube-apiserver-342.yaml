@@ -40,6 +40,7 @@ spec:
         - --service-cluster-ip-range=10.96.0.0/12
         - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
         - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
+        # 自定义的webhook认证
         - --authentication-token-webhook-config-file=/etc/config/webhook-config.json
       image: registry.aliyuncs.com/google_containers/kube-apiserver:v1.22.2
       imagePullPolicy: IfNotPresent
@@ -95,6 +96,7 @@ spec:
         - mountPath: /usr/share/ca-certificates
           name: usr-share-ca-certificates
           readOnly: true
+        # 挂载 webhook 配置
         - name: webhook-config
           mountPath: /etc/config
           readOnly: true

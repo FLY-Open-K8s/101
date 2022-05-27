@@ -12,8 +12,11 @@ import (
 )
 
 func main() {
+	// 1. 自定义认证请求
 	http.HandleFunc("/authenticate", func(w http.ResponseWriter, r *http.Request) {
+		// 1.1 解码
 		decoder := json.NewDecoder(r.Body)
+		// 1.2 序列化TokenReview
 		var tr authentication.TokenReview
 		err := decoder.Decode(&tr)
 		if err != nil {
@@ -29,11 +32,12 @@ func main() {
 			return
 		}
 		log.Print("receving request")
-		// Check User
+		// 1.3 校验请求（用户token是否有效）Check User
 		ts := oauth2.StaticTokenSource(
 			&oauth2.Token{AccessToken: tr.Spec.Token},
 		)
 		tc := oauth2.NewClient(context.Background(), ts)
+		// 2.1 发送认证请求
 		client := github.NewClient(tc)
 		user, _, err := client.Users.Get(context.Background(), "")
 		if err != nil {
@@ -57,6 +61,7 @@ func main() {
 				UID:      *user.Login,
 			},
 		}
+		// 2.2 解析认证成功后的数据，组装成k8s
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"apiVersion": "authentication.k8s.io/v1beta1",
 			"kind":       "TokenReview",
