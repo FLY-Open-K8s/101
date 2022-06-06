@@ -48,7 +48,7 @@ vi ~/.kube/config
     token: <mytoken>
 ```
 
-### 7. Get pods by mfanjie
+### 7. Get pods by Fly0905
 
 ```sh
 kubectl get po --user Fly0905
@@ -56,11 +56,39 @@ kubectl get po --user Fly0905
 Error from server (Forbidden): pods is forbidden: User "Fly0905" cannot list resource "pods" in API group "" in the namespace "default"
 ```
 
+### 8. Grant permission
+
+> 使用证书中的 'subject' 的通用名称（Common Name）字段（例如，"/CN=bob"）来 确定用户名
+>
+> 使用GIthub的用户名 来确定用户名
+
+```sh
+# 1.22.2 版本写法
+kubectl create role developer --verb=create --verb=get --verb=list --verb=update --verb=delete --2-pod-resource=pods
+
+kubectl create rolebinding developer-binding-Fly0905 --role=developer --user=Fly0905
+
+# 1.18.6 版本写法
+kubectl create role developer --verb=get,list,watch --resource=pods,pods/status
+
+kubectl create rolebinding developer-binding-Fly0905 --role=developer --user=Fly0905
+```
+
+### Get pod
+
+```bash
+kubectl get pod  --user Fly0905
+```
+
+### Reset
+
 ### 8. Reset the env
 
 ```sh
 cp ~/kube-apiserver.yaml /etc/kubernetes/manifests/kube-apiserver.yaml
 ```
+
+
 
 ## 参考
 
