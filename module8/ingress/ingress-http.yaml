@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-http
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    # 若还想使用http协议，则可以在NGINX配置映射中，使用全局禁用ssl-redirect: "false"。
+    # 方式一-----全局设置：在nginx-ingress-controller对应的config-map中，配置ssl-redirect=false
+    # 或在每个应用服务的Ingress.yaml中，添加注解nginx.ingress.kubernetes.io/ssl-redirect: "false"。
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+    - host: www.flynginx.com
+      http:
+        paths:
+          - path: "/"
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-svc
+                port:
+                  number: 80
