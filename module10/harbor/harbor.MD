@@ -154,3 +154,83 @@ psql -U postgres -d postgres -h 127.0.0.1 -p 5432
 select * from harbor_user;
 \dt
 ```
+
+### 异常问题
+
+```bash
+#docker login -u admin -p Harbor12345 core.harbor.domain
+WARNING!Using --password via the CLI is insecure.Use --password-stdin.
+INFO[0000]Error logging in to endpoint,trying next endpoint error="Get \"https://core.harbor.domain/v2/":
+x509:certificate is valid for core.harbor.domai,not core.harbor.domain"
+Get "https://core.harbor.domain/v2/":x509:certificate is valid for core.harbor.domai,not core.harbor.domai
+```
+
+### **1、Error response from daemon: Get https://hub.7d.com/v2/: x509: certificate signed by unknown authorit**
+
+需要到 `docker.service` 中修改下参数就可以了
+
+修改 `/usr/lib/systemd/system/docker.service` 配置：
+
+```bash
+# ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375 -H unix://var/run/docker.sock
+```
+
+重启docker：
+
+```bash
+## 守护进程重启
+sudo systemctl daemon-reload
+## 重启docker服务
+sudo systemctl restart docker
+```
+
+### **2、413 Request Entity Too Large**
+
+```bash
+$ docker push hub.7d.com/mall_repo/mall-portal:1.0
+The push refers to repository [hub.7d.com/mall_repo/mall-portal]
+5a8f64cc7f4c: Pushing [==================================================>]  73.98MB/73.98MB
+35c20f26d188: Layer already exists 
+c3fe59dd9556: Preparing 
+6ed1a81ba5b6: Layer already exists 
+a3483ce177ce: Layer already exists 
+ce6c8756685b: Waiting 
+30339f20ced0: Waiting 
+0eb22bfb707d: Waiting 
+a2ae92ffcd29: Waiting 
+error parsing HTTP 413 response body: invalid character '<' looking for beginning of value: "<html>\r\n<head><title>413 Request Entity Too Large</title></head>\r\n<body>\r\n<center><h1>413 Request Entity Too Large</h1></center>\r\n<hr><center>nginx/1.17.3</center>\r\n</body>\r\n</html>\r\n"
+```
+
+解决办法是自定义参数文件增加：
+
+```bash
+  ingress:
+    hosts:
+      ### 配置 Harbor 的访问域名，需要注意的是配置 notary 域名要和 core 处第一个单词外，其余保持一致
+      core: hub.7d.com
+      notary: notary.7d.com
+    controller: default
+    annotations:
+      ingress.kubernetes.io/ssl-redirect: "true"
+      ingress.kubernetes.io/proxy-body-size: "0"
+      #### 如果是 traefik ingress，则按下面配置：
+#      kubernetes.io/ingress.class: "traefik"
+#      traefik.ingress.kubernetes.io/router.tls: 'true'
+#      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      #### 如果是 nginx ingress，则按下面配置：
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      # 增加 Nignx配置，放开限制：A
+      nginx.org/client-max-body-size: "0"
+```
+
+示例源码：
+
+- https://github.com/zuozewei/blog-example/tree/master/Kubernetes/k8s-harbor
+
+### 参考链接
+
+https://goharbor.io/docs/2.5.0/install-config/harbor-ha-helm/
+https://blog.z0ukun.com/?p=3597
+https://cloud.tencent.com/developer/article/1754686
