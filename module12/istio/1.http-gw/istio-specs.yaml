@@ -1,8 +1,10 @@
 apiVersion: networking.istio.io/v1beta1
+# VirtualService 定义的是路由配置
 kind: VirtualService
 metadata:
   name: simple
 spec:
+  # 属于Gateway资源对象的一部分
   gateways:
     - simple
   hosts:
@@ -10,13 +12,17 @@ spec:
   http:
     - match:
         - port: 80
+      # VirtualService 定义的是路由配置
       route:
         - destination:
+            # 名字和namespace都是simple
             host: simple.simple.svc.cluster.local
             port:
               number: 80
 ---
 apiVersion: networking.istio.io/v1beta1
+# 最终对应一个Listener
+# Gateway 中的 Pod其实就是一个 Envoy process
 kind: Gateway
 metadata:
   name: simple

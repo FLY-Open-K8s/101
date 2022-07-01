@@ -1,4 +1,5 @@
 ### Install
+istioctl upgrade --set values.global.tracer.zipkin.address=jaeger-collector:9411
 
 ```sh
 kubectl apply -f jaeger.yaml
@@ -16,6 +17,8 @@ kubectl -n tracing apply -f service2.yaml
 kubectl apply -f istio-specs.yaml -n tracing
 ```
 
+
+
 ### Check ingress ip
 
 ```sh
@@ -26,8 +29,12 @@ istio-ingressgateway   LoadBalancer   $INGRESS_IP
 
 ### Access the tracing via ingress for 100 times(sampling rate is 1%)
 
+
+
 ```sh
 curl $INGRESS_IP/service0
+
+for i in {1..100}; do curl $INGRESS_IP/service0;done
 ```
 
 ### Check tracing dashboard
