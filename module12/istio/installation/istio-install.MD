@@ -4,26 +4,11 @@ Istio 使用功能强大的 Envoy 服务代理扩展了 Kubernetes，以建立�
 
 ![service-mesh](https://istio.io/latest/img/service-mesh.svg)
 
-## Istio安装
-
-完成下面步骤需要你有一个 cluster， 且运行着兼容版本的 Kubernetes (1.21, 1.22, 1.23, 1.24)。 你可以使用任何受支持的平台，例如： [Minikube](https://kubernetes.io/zh/docs/tasks/tools/install-minikube/) 或[特定平台安装说明](https://istio.io/latest/zh/docs/setup/platform-setup/) 章节中指定的其他平台。
-
-请按照以下步骤开始使用 Istio：
-
-1. [下载并安装 Istio](https://istio.io/latest/zh/docs/setup/getting-started/#download)
-2. [部署示例应用程序](https://istio.io/latest/zh/docs/setup/getting-started/#bookinfo)
-3. [对外开放应用程序](https://istio.io/latest/zh/docs/setup/getting-started/#ip)
-4. [查看仪表板](https://istio.io/latest/zh/docs/setup/getting-started/#dashboard)
-
-
-
 ## 下载 Istio
 
-**首先查看版本对照表**
+### 0. Istio 版本的支持状态
 
-[【support-status-of-istio-releases】](https://istio.io/latest/docs/releases/supported-releases/#support-status-of-istio-releases)
-
-## Istio 版本的支持状态
+> [Istio版本对照表](https://istio.io/latest/docs/releases/supported-releases/#support-status-of-istio-releases)
 
 | Version         | Currently Supported  | Release Date      | End of Life              | Supported Kubernetes Versions | Tested, but not supported    |
 | --------------- | -------------------- | ----------------- | ------------------------ | ----------------------------- | ---------------------------- |
@@ -38,65 +23,64 @@ Istio 使用功能强大的 Envoy 服务代理扩展了 Kubernetes，以建立�
 | 1.7             | No                   | August 21, 2020   | Feb 25, 2021             | 1.16, 1.17, 1.18              | 1.15                         |
 | 1.6 and earlier | No                   |                   |                          |                               |                              |
 
+> 注意：[Kubernetes 1.22 删除了一些已弃用的 API](https://kubernetes.io/blog/2021/07/14/upcoming-changes-in-kubernetes-1-22/)，因此 1.10.0 之前的 Istio 版本将不再工作。如果您要升级 Kubernetes 版本，请确保您的 Istio 版本仍受支持。
 
+### 1. 下载Istio安装包
 
-> [Kubernetes 1.22 removed some deprecated APIs](https://kubernetes.io/blog/2021/07/14/upcoming-changes-in-kubernetes-1-22/) and as a result versions of Istio prior to 1.10.0 will no longer work. If you are upgrading your Kubernetes version, make sure that your Istio version is still supported.
->
-> [Kubernetes 1.22 删除了一些已弃用的 API](https://kubernetes.io/blog/2021/07/14/upcoming-changes-in-kubernetes-1-22/)，因此 1.10.0 之前的 Istio 版本将不再工作。如果您要升级 Kubernetes 版本，请确保您的 Istio 版本仍受支持。
+到 [Istio 发布](https://github.com/istio/istio/releases/tag/1.14.1) 页面，下载针对你操作系统的安装文件， 或用自动化工具下载并提取最新版本（Linux 或 macOS）：
 
+```bash
+$ curl -L https://istio.io/downloadIstio | sh -
+```
 
+上面的命令下载最新版本（用数值表示）的 Istio。 你可以给命令行传递变量，用来下载指定的、不同处理器体系的版本。 例如，下载 x86_64 架构的、1.6.8 版本的 Istio ，运行：
 
-1. 转到 [Istio 发布](https://github.com/istio/istio/releases/tag/1.14.1) 页面，下载针对你操作系统的安装文件， 或用自动化工具下载并提取最新版本（Linux 或 macOS）：
+```bash
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.12.0 TARGET_ARCH=x86_64 sh -
 
-   ```bash
-   $ curl -L https://istio.io/downloadIstio | sh -
-   ```
+# 或者
 
-   上面的命令下载最新版本（用数值表示）的 Istio。 你可以给命令行传递变量，用来下载指定的、不同处理器体系的版本。 例如，下载 x86_64 架构的、1.6.8 版本的 Istio ，运行：
+wget https://github.com/istio/istio/releases/download/1.14.1/istio-1.14.1-linux-amd64.tar.gz
+tar zxvf istio-1.14.1-linux-amd64.tar.gz -C /usr/local/
+```
 
-   ```bash
-   curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.12.0 TARGET_ARCH=x86_64 sh -
-   
-   # 或者
-   
-   wget https://github.com/istio/istio/releases/download/1.14.1/istio-1.14.1-linux-amd64.tar.gz
-   tar zxvf istio-1.14.1-linux-amd64.tar.gz -C /usr/local/
-   ```
+### 2. 进入Istio安装目录
 
-2. 转到 Istio 包目录。例如，如果包是 `istio-1.14.1`：
+转到 Istio 包目录。例如，如果包是 `istio-1.14.1`：
 
-   ```bash
-   $ cd istio-1.14.1
-   ```
+```bash
+$ cd istio-1.14.1
+```
 
-   安装目录包含：
+安装目录包含：
 
-   - `samples/` 目录下的示例应用程序
-   - `bin/` 目录下的 [`istioctl`](https://istio.io/latest/zh/docs/reference/commands/istioctl) 客户端二进制文件 .
-3. 将 `istioctl` 客户端加入搜索路径（Linux or macOS）:
+- `samples/` 目录下的示例应用程序
+- `bin/` 目录下的 [`istioctl`](https://istio.io/latest/zh/docs/reference/commands/istioctl) 客户端二进制文件 .
 
-   ```bash
-   $ export PATH=$PWD/bin:$PATH
-   
-   #或者设置环境变量
-   echo 'export ISTIO_HOME=/usr/local/istio-1.14.1' >> /etc/profile
-   echo 'export PATH=$PATH:$ISTIO_HOME/bin' >> /etc/profile
-   #加载变量
-   source /etc/profile
-   ```
+### 3. 添加环境变量 PATH
 
-4. 验证安装效果（查看版本）
+将 `istioctl` 客户端加入搜索路径（Linux or macOS）:
 
-   ```bash
-   istioctl version
-   
-   ➜  istio-1.12.0 istioctl version
-   no running Istio pods in "istio-system"
-   1.12.0
-   You have new mail.  
-   ```
+```bash
+$ export PATH=$PWD/bin:$PATH
 
+#或者设置环境变量
+echo 'export ISTIO_HOME=/usr/local/istio-1.14.1' >> /etc/profile
+echo 'export PATH=$PATH:$ISTIO_HOME/bin' >> /etc/profile
+#加载变量
+source /etc/profile
+```
 
+### 4. 验证效果（查看版本）
+
+```bash
+istioctl version
+
+➜  istio-1.12.0 istioctl version
+no running Istio pods in "istio-system"
+1.12.0
+You have new mail.  
+```
 
 ## 安装 Istio
 
@@ -173,12 +157,10 @@ Istio 使用功能强大的 Envoy 服务代理扩展了 Kubernetes，以建立�
    reviews       ClusterIP   10.0.0.28       <none>        9080/TCP   29s
    ```
 
-   
-
    和
 
    ```
-   $ kubectl get pods
+$ kubectl get pods
    NAME                              READY   STATUS    RESTARTS   AGE
    details-v1-558b8b4b76-2llld       2/2     Running   0          2m41s
    productpage-v1-6987489c74-lpkgl   2/2     Running   0          2m40s
@@ -187,7 +169,7 @@ Istio 使用功能强大的 Envoy 服务代理扩展了 Kubernetes，以建立�
    reviews-v2-7d79d5bd5d-8zzqd       2/2     Running   0          2m41s
    reviews-v3-7dbcdcbc56-m8dph       2/2     Running   0          2m41s
    ```
-
+   
    
 
    
@@ -239,8 +221,6 @@ $ export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway
 $ export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].nodePort}')
 ```
 
-
-
 确认端口被成功的赋值给了每一个环境变量：
 
 ```
@@ -248,22 +228,16 @@ $ echo "$INGRESS_PORT"
 32194
 ```
 
-
-
 ```
 $ echo "$SECURE_INGRESS_PORT"
 31632
 ```
-
-
 
 设置入站 IP：
 
 ```
 $ export INGRESS_HOST=$(minikube ip)
 ```
-
-
 
 确认 IP 地址被成功的赋值给了环境变量：
 
@@ -272,23 +246,17 @@ $ echo "$INGRESS_HOST"
 192.168.4.102
 ```
 
-
-
 在一个新的终端窗口中执行此命令，启动一个 Minikube 隧道，它将把流量发送到你的 Istio 入站网关：
 
 ```
 $ minikube tunnel
 ```
 
-
-
 1. 设置环境变量 `GATEWAY_URL`:
 
    ```
    $ export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
    ```
-
-   
 
 2. 确保 IP 地址和端口均成功的赋值给了环境变量:
 
@@ -297,7 +265,6 @@ $ minikube tunnel
    192.168.99.100:32194
    ```
 
-   
 
 ### 验证外部访问
 
@@ -308,8 +275,6 @@ $ minikube tunnel
    ```
    $ echo "http://$GATEWAY_URL/productpage"
    ```
-
-   
 
 2. 把上面命令的输出地址复制粘贴到浏览器并访问，确认 Bookinfo 应用的产品页面是否可以打开。
 
@@ -328,10 +293,6 @@ Istio 和[几个](https://istio.io/latest/zh/docs/ops/integrations)遥测应用�
    deployment "kiali" successfully rolled out
    ```
 
-   
-
-   
-
    如果在安装插件时出错，再运行一次命令。 有一些和时间相关的问题，再运行就能解决。
 
 2. 访问 Kiali 仪表板。
@@ -340,8 +301,6 @@ Istio 和[几个](https://istio.io/latest/zh/docs/ops/integrations)遥测应用�
    $ istioctl dashboard kiali
    ```
 
-   
-
 3. 在左侧的导航菜单，选择 *Graph* ，然后在 *Namespace* 下拉列表中，选择 *default* 。
 
    Kiali 仪表板展示了网格的概览、以及 `Bookinfo` 示例应用的各个服务之间的关系。 它还提供过滤器来可视化流量的流动。
@@ -349,27 +308,6 @@ Istio 和[几个](https://istio.io/latest/zh/docs/ops/integrations)遥测应用�
    [![Kiali Dashboard](https://istio.io/latest/zh/docs/setup/getting-started/kiali-example2.png)](https://istio.io/latest/zh/docs/setup/getting-started/kiali-example2.png)
 
    Kiali Dashboard
-
-## 后续步骤
-
-恭喜你完成了评估安装！
-
-对于新手来说，这些任务是非常好的资源，可以借助 `demo` 安装更深入评估 Istio 的特性：
-
-- [请求路由](https://istio.io/latest/zh/docs/tasks/traffic-management/request-routing/)
-- [错误注入](https://istio.io/latest/zh/docs/tasks/traffic-management/fault-injection/)
-- [流量切换](https://istio.io/latest/zh/docs/tasks/traffic-management/traffic-shifting/)
-- [查询指标](https://istio.io/latest/zh/docs/tasks/observability/metrics/querying-metrics/)
-- [可视化指标](https://istio.io/latest/zh/docs/tasks/observability/metrics/using-istio-dashboard/)
-- [访问外部服务](https://istio.io/latest/zh/docs/tasks/traffic-management/egress/egress-control/)
-- [可视化网格](https://istio.io/latest/zh/docs/tasks/observability/kiali/)
-
-在你为了生产系统定制Istio之前，参阅这些资源：
-
-- [部署模型](https://istio.io/latest/zh/docs/ops/deployment/deployment-models/)
-- [部署的最佳实践](https://istio.io/latest/zh/docs/ops/best-practices/deployment/)
-- [Pod 的需求](https://istio.io/latest/zh/docs/ops/deployment/requirements/)
-- [通用安装说明](https://istio.io/latest/zh/docs/setup/)
 
 ## 卸载 Istio
 
@@ -398,27 +336,6 @@ $ istioctl manifest generate <your original installation options> | kubectl dele
 ```
 $ kubectl delete namespace istio-system
 ```
-
-
-
-
-
-### Install istio
-
-```sh
-curl -L https://istio.io/downloadIstio | sh -
-cd istio-1.12.0
-cp bin/istioctl /usr/local/bin
-istioctl install --set profile=demo -y
-```
-
-### Istio monitoring
-
-- Grafana dashboard `7639`
-
-
-
-
 
 ## 参考链接
 
