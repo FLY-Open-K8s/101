@@ -4,9 +4,14 @@
 exec_path=`pwd`
 cd `dirname $0`
 script_path=`pwd`
-echo "[install docker script path]:" $script_path
+echo $script_path
 
-REGISTRY_IP=`/sbin/ifconfig | grep inet | grep -v 127.0.0.1 | grep -v inet6 |grep $NETSEG | awk '{print $2}' | tr -d "addr:" | sed -n '1,1p'`
+#check param
+if [ -z $1 ]; then
+	echo "please execute the script in the following format,case: sh install_docker_pkg.sh HARBOR_VIP"
+	exit
+fi
+HARBOR_VIP=$1
 
 
 #remove existed docker rpms.
@@ -32,7 +37,7 @@ function update_daemon_json(){
 	mkdir -p /etc/docker
 	echo "{
 		\"registry-mirrors\":[\"http://hub-mirror.c.163.com\",\"https://registry.docker-cn.com\",\"https://docker.mirrors.ustc.edu.cn\"],
-		\"insecure-registries\":[\"$REGISTRY_IP:5000\"],
+		\"insecure-registries\":[\"$HARBOR_VIP:5000\"],
 		\"exec-opts\": [\"native.cgroupdriver=systemd\"],
 		\"log-driver\":\"json-file\",
 		\"log-opts\":{ \"max-size\" :\"100m\",\"max-file\":\"3\"}
@@ -75,6 +80,7 @@ else
     cd $pkg_path
     remove_existed_docker_rpms
     install_docker_package
+    install_nvidia_docker_package
     cd $script_path
 fi
 
