@@ -391,12 +391,108 @@ rm -rf /var/lib/rocanok
 
 ## 异常问题
 
-### rook-cephfs  code = Aborted pvc- already exists
+### 1. rook-cephfs:  code = Aborted pvc- already exists
 
 ```bash
- Warning  ProvisioningFailed    3s (x3 over 6s)        rook-ceph.cephfs.csi.ceph.com_csi-cephfsplugin-provisioner-689686b44-z6bsv_0e977714-5460-415a-9443-bdef2389ed94  failed to provision volume with StorageClass "rook-cephfs": rpc error: code = Aborted desc = an operation with the given Volume ID pvc-27dfe624-8f4c-419a-9844-f81754de2e6d already exists
+Warning  ProvisioningFailed    3s (x3 over 6s)        rook-ceph.cephfs.csi.ceph.com_csi-cephfsplugin-provisioner-689686b44-z6bsv_0e977714-5460-415a-9443-bdef2389ed94  failed to provision volume with StorageClass "rook-cephfs": rpc error: code = Aborted desc = an operation with the given Volume ID pvc-27dfe624-8f4c-419a-9844-f81754de2e6d already exists
  
 ```
+
+## 问题原因
+
+创建CephFilesystem的文件，要求*每个节点至少有 1 个 OSD*，每个 OSD 位于*3 个不同的节点*上。如下
+
+```bash
+apiVersion: ceph.rook.io/v1
+kind: CephFilesystem
+metadata:
+  name: myfs
+  namespace: rook-ceph
+spec:
+  metadataPool:
+    failureDomain: host
+    replicated:
+      size: 3
+  dataPools:
+    - failureDomain: host
+      replicated:
+        size: 3
+  preserveFilesystemOnDelete: true
+  metadataServer:
+    activeCount: 1
+    activeStandby: true
+    # A key/value list of annotations
+    annotations:
+    #  key: value
+    placement:
+    #  nodeAffinity:
+    #    requiredDuringSchedulingIgnoredDuringExecution:
+    #      nodeSelectorTerms:
+    #      - matchExpressions:
+    #        - key: role
+    #          operator: In
+    #          values:
+    #          - mds-node
+    #  tolerations:
+    #  - key: mds-node
+    #    operator: Exists
+    #  podAffinity:
+    #  podAntiAffinity:
+    #  topologySpreadConstraints:
+    resources:
+    #  limits:
+    #    cpu: "500m"
+    #    memory: "1024Mi"
+    #  requests:
+    #    cpu: "500m"
+    #    memory: "1024Mi"
+```
+
+这就需要*至少 3 个 bluestore OSD*，每个 OSD 位于*不同的节点*上。对于只有一个
+
+
+
+```bash
+[root@master-1 ceph]# kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- bash
+[root@rook-ceph-tools-5b54fb98c-n6qwk /]# ceph osd pool ls detail
+pool 1 'device_health_metrics' replicated size 1 min_size 1 crush_rule 0 object_hash rjenkins pg_num 128 pgp_num 128 pg_num_target 32 pgp_num_target 32 autoscale_mode on last_change 44 lfor 0/0/16 flags hashpspool stripe_width 0 pg_num_min 1 application mgr_devicehealth
+pool 2 'myfs-metadata' replicated size 3 min_size 2 crush_rule 1 object_hash rjenkins pg_num 32 pgp_num 32 autoscale_mode on last_change 41 flags hashpspool stripe_width 0 pg_autoscale_bias 4 pg_num_min 16 recovery_priority 5 application cephfs
+pool 3 'myfs-data0' replicated size 3 min_size 2 crush_rule 2 object_hash rjenkins pg_num 32 pgp_num 32 autoscale_mode on last_change 42 flags hashpspool stripe_width 0 application cephfs
+pool 4 'replicapool' replicated size 1 min_size 1 crush_rule 3 object_hash rjenkins pg_num 32 pgp_num 32 autoscale_mode on last_change 51 flags hashpspool,selfmanaged_snaps stripe_width 0 application rbd
+
+```
+
+对于只有一个 OSD 的测试，需要使用 Replica 值为 1 或使用 filesystem-test.yaml，它只需要一个 OSD。
+
+```bash
+#################################################################################################################
+# Create a filesystem with settings for a test environment where only a single OSD is required.
+#  kubectl create -f filesystem-test.yaml
+#################################################################################################################
+
+apiVersion: ceph.rook.io/v1
+kind: CephFilesystem
+metadata:
+  name: myfs
+  namespace: rook-ceph # namespace:cluster
+spec:
+  metadataPool:
+    replicated:
+      size: 1
+      requireSafeReplicaSize: false
+  dataPools:
+    - failureDomain: osd
+      replicated:
+        size: 1
+        requireSafeReplicaSize: false
+  preserveFilesystemOnDelete: false
+  metadataServer:
+    activeCount: 1
+    activeStandby: true
+
+```
+
+
 
 
 
@@ -411,3 +507,6 @@ https://rook.io/docs/rook/v1.7/quickstart.html
 https://rook.io/docs/rook/v1.7/ceph-dashboard.html
 
 https://rook.io/docs/rook/v1.7/ceph-toolbox.html
+
+https://github.com/rook/rook/issues/10504
+
