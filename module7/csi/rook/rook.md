@@ -1,5 +1,289 @@
 # Rook-Ceph1.7
 
+# Ceph架构和基本概念
+
+![img](https://cdn.jsdelivr.net/gh/Fly0905/note-picture@main/imag/202207290830071.png)
+
+## CEPH 简介
+
+### CEPH 
+
+无论您是想为[云平台提供](https://docs.ceph.com/en/quincy/glossary/#term-Cloud-Platforms)[Ceph 对象存储](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-Object-Storage)和/或 [Ceph 块设备](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-Block-Device)服务、部署[Ceph 文件系统](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-File-System)还是将 Ceph 用于其他目的，所有 [Ceph 存储集群](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-Storage-Cluster)部署都从设置每个 [Ceph 节点](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-Node)、您的网络和 Ceph开始存储集群。一个 Ceph 存储集群至少需要一个 Ceph Monitor、Ceph Manager 和 Ceph OSD（对象存储守护进程）。运行 Ceph 文件系统客户端时也需要 Ceph 元数据服务器。
+
+![img](https://cdn.jsdelivr.net/gh/Fly0905/note-picture@main/imag/202207290816443.png)
+
+- **Monitors**：[Ceph Monitor](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-Monitor) ( `ceph-mon`) 维护集群状态的映射，包括监视器映射、管理器映射、OSD 映射、MDS 映射和 CRUSH 映射。这些映射是 Ceph 守护进程相互协调所需的关键集群状态。监视器还负责管理守护进程和客户端之间的身份验证。冗余和高可用性通常需要至少三个监视器。：一个 Ceph 集群需要多个 Monitor 组成的小集群，它们通过 Paxos 同步数据，用来保存 OSD 的元数据。
+- **Managers**：[Ceph Manager](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-Manager)守护进程 ( `ceph-mgr`) 负责跟踪运行时指标和 Ceph 集群的当前状态，包括存储利用率、当前性能指标和系统负载。Ceph Manager 守护进程还托管基于 python 的模块来管理和公开 Ceph 集群信息，包括基于 Web 的[Ceph Dashboard](https://docs.ceph.com/en/quincy/mgr/dashboard/#mgr-dashboard)和 [REST API](https://docs.ceph.com/en/quincy/mgr/restful)。高可用性通常需要至少两个管理器。
+- **Ceph OSD**：OSD 全称 Object Storage Device，对象存储守护进程（[Ceph OSD](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-OSD)， `ceph-osd`）存储数据、处理数据复制、恢复、重新平衡，并通过检查其他 Ceph OSD 守护进程的心跳向 Ceph 监视器和管理器提供一些监视信息。冗余和高可用性通常需要至少三个 Ceph OSD。也就是负责响应客户端请求返回具体数据的进程，一个Ceph集群一般有很多个OSD。
+- **CRUSH**：CRUSH 是 Ceph 使用的数据分布算法，类似一致性哈希，让数据分配到预期的位置。Ceph 将数据作为对象存储在逻辑存储池中。使用 [CRUSH](https://docs.ceph.com/en/quincy/glossary/#term-CRUSH)算法，Ceph 计算出哪个归置组 (PG) 应该包含该对象，以及哪个 OSD 应该存储该归置组。CRUSH 算法使 Ceph 存储集群能够动态扩展、重新平衡和恢复。
+- **MDS**：MDS全称Ceph Metadata Server，[Ceph 元数据服务器](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-Metadata-Server)(MDS `ceph-mds`) 代表[Ceph 文件系统](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-File-System)存储元数据（即 Ceph 块设备和 Ceph 对象存储不使用 MDS）。Ceph 元数据服务器允许 POSIX 文件系统用户执行基本命令（如 `ls`、`find`等），而不会给 Ceph 存储集群带来巨大负担。**MDS进程并不是必须的进程，只有需要使用cephFS时，才需要配置MDS节点。**
+- **ObjectGateway**：Object Gateway是对象存储接口，构建在librados之上，为应用提供restful类型的网关。其支持两种接口：S3-compatible API：兼容AWS S3 Restful接口，Swift-compaible API：兼容Openstack Swift接口。
+
+- RADOS：实现数据分配、Failover 等集群操作。
+- Libradio：Libradio 是RADOS提供库，因为 RADOS 是协议，很难直接访问，因此上层的 RBD、RGW和CephFS都是通过libradios访问的，目前提供 PHP、Ruby、Java、Python、C 和 C++的支持。
+- RBD：RBD全称 RADOS Block Device，是 Ceph 对外提供的块设备服务。
+- RGW：RGW全称RADOS gateway，是Ceph对外提供的对象存储服务，接口与S3和Swift兼容。
+- CephFS：CephFS全称Ceph File System，是Ceph对外提供的文件系统服务
+
+**Ceph逻辑单元**
+
+- **pool（池）**：pool是ceph存储数据时的逻辑分区，它起到namespace的作用，在集群层面的逻辑切割。每个pool包含一定数量(可配置)的PG。
+- **PG（Placement Group）**：PG是一个逻辑概念，每个对象都会固定映射进一个PG中，所以当我们要寻找一个对象时，只需要先找到对象所属的PG，然后遍历这个PG就可以了，无需遍历所有对象。而且在数据迁移时，也是以PG作为基本单位进行迁移。PG的副本数量也可以看作数据在整个集群的副本数量。**一个PG 包含多个 OSD 。引入 PG 这一层其实是为了更好的分配数据和定位数据。**
+- **OID**：存储的数据都会被切分成对象（Objects）。每个对象都会有一个唯一的OID，由ino与ono生成，ino即是文件的File ID，用于在全局唯一标示每一个文件，而ono则是分片的编号，OID = ( ino + ono )= (File ID + File part number)，例如File Id = A，有两个分片，那么会产生两个OID，A01与A02。
+- **PgID**：首先使用静态hash函数对OID做hash取出特征码，用特征码与PG的数量去模，得到的序号则是PGID。
+
+- **Object**：Ceph 最底层的存储单元是 Object对象，每个 Object 包含元数据和原始数据。
+
+
+
+## CEPH 存储集群
+
+[Ceph 存储集群](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-Storage-Cluster)是所有 Ceph 部署的基础。基于RADOS，Ceph 存储集群由几种类型的守护进程组成：
+
+> 1. [Ceph OSD 守护进程](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-OSD-Daemon)(OSD) 将数据作为对象存储在存储节点上
+> 2. [Ceph Monitor](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-Monitor) (MON) 维护集群映射的主副本。
+> 3. [Ceph Manager 管理](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-Manager)器 守护进程
+
+一个 Ceph 存储集群可能包含数千个存储节点。一个最小的系统至少有一个 Ceph Monitor 和两个 Ceph OSD Daemons 用于数据复制。
+
+Ceph 文件系统、Ceph 对象存储和 Ceph 块设备从 Ceph 存储集群读取数据并将数据写入到 Ceph 存储集群。
+
+1.1 Ceph 接口
+
+Ceph 支持三种接口：
+
+- Object：有原生的API，而且也兼容 Swift 和 S3 的 API
+- Block：支持精简配置、快照、克隆
+- File：Posix 接口，支持快照
+
+ 
+
+# ceph存储数据流程
+
+例如：当client向ceph集群中写入一个文件时，这个文件是如何存储到ceph中的，其存储过程是如何
+
+## ceph存储流程图
+
+![img](https://cdn.jsdelivr.net/gh/Fly0905/note-picture@main/imag/202207290853335.png)
+
+## ceph存储流程详解
+
+- File: 就是我们想要存储和访问的文件，这个是面向我们用户的，是我们直观操作的对象。
+- Object：object就是Ceph底层RADOS所看到的对象，也就是在Ceph中存储的基本单位。object的大小由RADOS限定（通常为2m或者4m）。
+- PG (Placement Group): PG是一个逻辑的概念，它的用途是对object的存储进行组织和位置的映射，通过它可以更好的分配数据和定位数据。
+- OSD (Object Storage Device): 它就是真正负责数据存取的服务。
+
+```text
+graph LR
+文件-->对象
+对象-->归置组
+归置组-->OSD
+```
+
+1. 文件到对象的映射
+
+首先，将file切分成多个object，每个object的大小由RADOS限定（通常为2m或者4m）。每个object都有唯一的id即oid，oid由ino和ono产生的
+
+- ino：文件唯一id（比如filename+timestamp）
+- ono：切分后某个object的序号(比如0,1,2,3,4,5等)
+
+1. 对象到归置组的映射
+
+对oid进行hash然后进行按位与计算得到某一个PG的id。mask为PG的数量减1。这样得到的pgid是随机的。
+
+注：这与PG的数量和文件的数量有关系。在足够量级的程度上数据是均匀分布的。
+
+1. 归置组到OSD的映射
+
+通过CRUSH算法可以通过pgid得到多个osd，简而言之就是根据集群的OSD状态和存储策略配置动态得到osdid，从而自动化的实现高可靠性和数据均匀分布。在ceph中，数据到底是在哪个osd是通过CRUSH算法计算出来的
+
+## 查看一个object的具体存放位置
+
+```bash
+# 1. 新建一个test-pool池
+[root@rook-ceph-tools-c76dd697d-tn75t /]# ceph osd pool create test-pool 1 1
+pool 'test-pool' created
+# 查询系统中所有的pool
+[root@rook-ceph-tools-c76dd697d-tn75t /]# rados lspools
+device_health_metrics
+test-pool
+
+# 2. 上传一个文件到test池中
+#OBJECT COMMANDS
+#   get <obj-name> [outfile]         fetch object
+#   put <obj-name> [infile]          write object
+[root@rook-ceph-tools-c76dd697d-tn75t /]# touch hello.txt
+[root@rook-ceph-tools-c76dd697d-tn75t /]# rados -p test-pool put test hello.txt
+
+# 3. 查看test池中刚上传的对象
+[root@rook-ceph-tools-c76dd697d-tn75t /]# rados -p test-pool ls | grep test
+test
+# 4. 查看对象位置
+[root@rook-ceph-tools-c76dd697d-tn75t /]# ceph osd map test-pool test
+osdmap e24 pool 'test-pool' (2) object 'test' -> pg 2.40e8aab5 (2.35) -> up ([0], p0) acting ([0], p0)
+# 这代表test-pool中的test这个对象位于2.35这个pg中，并且位于osd0上（目前是单点的ceph，所以没有副本）
+
+# 5. 进入到对应osd的存储目录，找到对应文件即可
+/var/lib/ceph/osd/ceph-0/current/2.35_head
+# 这个目录下存放了2.35这个pg中所有的object，可以根据指纹40e8aab5来定位到具体的文件。
+```
+
+
+
+
+
+### 5. 进入到对应osd的存储目录，找到对应文件即可
+
+```text
+
+➜ pwd
+/var/lib/ceph/osd/ceph-0/current/3.7_head
+
+➜ ll
+total 20508
+-rw-r--r-- 1 root root 4194304 Apr 23 09:51 benchmark\udata\uiscloud163-200\u3243175\uobject20__head_9D317607__3
+-rw-r--r-- 1 root root 4194304 Apr 23 09:51 benchmark\udata\uiscloud163-200\u3243175\uobject37__head_F83C35C7__3
+-rw-r--r-- 1 root root 4194304 Apr 23 09:51 benchmark\udata\uiscloud163-200\u3243175\uobject43__head_78BB75F7__3
+-rw-r--r-- 1 root root 4194304 Apr 23 09:51 benchmark\udata\uiscloud163-200\u3243175\uobject5__head_E2A01F47__3
+-rw-r--r-- 1 root root 4194304 Apr 23 09:51 benchmark\udata\uiscloud163-200\u3243175\uobject64__head_98D1E25F__3
+-rw-r--r-- 1 root root       0 Apr 23 09:51 __head_00000007__3
+-rw-r--r-- 1 root root     502 Apr 23 14:45 xsw__head_30BDC57F__3
+```
+
+- 这个目录下存放了3.7这个pg中所有的object，可以根据指纹30bdc57f来定位到具体的文件。
+
+ 
+
+## 三种存储类型
+
+ 块设备：主要是将裸磁盘空间映射给主机使用，类似于SAN存储，使用场景主要是文件存储，日志存储，虚拟化镜像文件等。
+
+文件存储：典型代表：FTP 、NFS 为了克服块存储无法共享的问题，所以有了文件存储。
+
+对象存储：具备块存储的读写高速和文件存储的共享等特性并且通过 Restful API 访问，通常适合图片、流媒体存储。
+
+ 
+
+2.1 Ceph IO流程及数据分布
+
+![img](https://img2018.cnblogs.com/blog/828019/201911/828019-20191120182021092-415688233.png)![img](https://cdn.jsdelivr.net/gh/Fly0905/note-picture@main/imag/202207290831368.png)
+
+ 
+
+步骤：
+
+1. client 创建cluster handler。
+2. client 读取配置文件。
+3. client 连接上monitor，获取集群map信息。
+4. client 读写io 根据crushmap 算法请求对应的主osd数据节点。
+5. 主osd数据节点同时写入另外两个副本节点数据。
+6. 等待主节点以及另外两个副本节点写完数据状态。
+7. 主节点及副本节点写入状态都成功后，返回给client，io写入完成。
+
+ 
+
+**新主IO流程图**
+
+**说明：**
+
+如果新加入的OSD1取代了原有的 OSD4成为 Primary OSD, 由于 OSD1 上未创建 PG , 不存在数据，那么 PG 上的 I/O 无法进行，怎样工作的呢？
+
+ 
+
+![img](https://cdn.jsdelivr.net/gh/Fly0905/note-picture@main/imag/202207290831382.png)
+
+ 
+
+ 
+
+ 
+
+步骤：
+
+（1）client连接monitor获取集群map信息。
+
+（2）同时新主osd1由于没有pg数据会主动上报monitor告知让osd2临时接替为主。
+
+（3）临时主osd2会把数据全量同步给新主osd1。
+
+（4）client IO读写直接连接临时主osd2进行读写。
+
+（5）osd2收到读写io，同时写入另外两副本节点。
+
+（6）等待osd2以及另外两副本写入成功。
+
+（7）osd2三份数据都写入成功返回给client, 此时client io读写完毕。
+
+（8）如果osd1数据同步完毕，临时主osd2会交出主角色。
+
+（9）osd1成为主节点，osd2变成副本。
+
+
+
+## Ceph 核心组件及概念介绍
+
+**Monitor**
+
+一个 Ceph 集群需要多个 Monitor 组成的小集群，它们通过 Paxos 同步数据，用来保存 OSD 的元数据。
+
+**OSD**
+
+OSD 全称 Object Storage Device，也就是负责响应客户端请求返回具体数据的进程。一个 Ceph 集群一般都有很多个 OSD。
+
+
+
+**MDS**
+
+MDS 全称 Ceph Metadata Server，是 CephFS 服务依赖的元数据服务。
+
+
+
+**Object**
+
+Ceph 最底层的存储单元是 Object 对象，每个 Object 包含元数据和原始数据。
+
+
+
+**PG**
+
+PG 全称 Placement Grouops，是一个逻辑的概念，一个 PG 包含多个 OSD。引入 PG 这一层其实是为了更好的分配数据和定位数据。**RADOS**
+
+RADOS 全称 Reliable Autonomic Distributed Object Store，是 Ceph 集群的精华，用户实现数据分配、Failover 等集群操作。
+
+
+
+**Libradio**
+
+Librados 是 Rados 提供库，因为 RADOS 是协议很难直接访问，因此上层的 RBD、RGW 和 CephFS 都是通过 librados 访问的，目前提供 PHP、Ruby、Java、Python、C 和 C++支持。
+
+
+
+**CRUSH**
+
+CRUSH 是 Ceph 使用的数据分布算法，类似一致性哈希，让数据分配到预期的地方。
+
+
+
+**RBD**
+
+RBD 全称 RADOS block device，是 Ceph 对外提供的块设备服务。
+
+
+
+**RGW**
+
+RGW 全称 RADOS gateway，是 Ceph 对外提供的对象存储服务，接口与 S3 和 Swift 兼容。
+
+
+
+**CephFS**
+
+CephFS 全称 Ceph File System，是 Ceph 对外提供的文件系统服务。
+
+
+
+# Ceph安装
+
 ## vmware 挂载裸盘
 
 ```bash
@@ -72,7 +356,7 @@ for i in `kubectl api-resources | grep true | awk '{print \$1}'`; do echo $i;kub
 ### Checkout rook
 
 ```sh
-git clone --single-branch --branch master https://github.com/rook/rook.git
+git clone --single-branch --branch release-1.7 https://github.com/rook/rook.git
 cd rook/cluster/examples/kubernetes/ceph
 ```
 
@@ -498,7 +782,7 @@ spec:
 
 ## 参考链接
 
-github.com/rook/rook/tree/master/cluster/examples
+https://github.com/rook/rook/tree/release-1.7/cluster/examples/kubernetes
 
 https://github.com/rook/rook/tree/master/deploy/examples
 
