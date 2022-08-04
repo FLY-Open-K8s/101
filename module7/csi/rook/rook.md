@@ -19,11 +19,11 @@
 - **MDS**：MDS全称Ceph Metadata Server，[Ceph 元数据服务器](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-Metadata-Server)(MDS `ceph-mds`) 代表[Ceph 文件系统](https://docs.ceph.com/en/quincy/glossary/#term-Ceph-File-System)存储元数据（即 Ceph 块设备和 Ceph 对象存储不使用 MDS）。Ceph 元数据服务器允许 POSIX 文件系统用户执行基本命令（如 `ls`、`find`等），而不会给 Ceph 存储集群带来巨大负担。**MDS进程并不是必须的进程，只有需要使用cephFS时，才需要配置MDS节点。**
 - **ObjectGateway**：Object Gateway是对象存储接口，构建在librados之上，为应用提供restful类型的网关。其支持两种接口：S3-compatible API：兼容AWS S3 Restful接口，Swift-compaible API：兼容Openstack Swift接口。
 
-- RADOS：实现数据分配、Failover 等集群操作。
-- Libradio：Libradio 是RADOS提供库，因为 RADOS 是协议，很难直接访问，因此上层的 RBD、RGW和CephFS都是通过libradios访问的，目前提供 PHP、Ruby、Java、Python、C 和 C++的支持。
-- RBD：RBD全称 RADOS Block Device，是 Ceph 对外提供的块设备服务。
-- RGW：RGW全称RADOS gateway，是Ceph对外提供的对象存储服务，接口与S3和Swift兼容。
-- CephFS：CephFS全称Ceph File System，是Ceph对外提供的文件系统服务
+- **RADOS**：RADOS 全称 Reliable Autonomic Distributed Object Store，是Ceph存储集群的基础。**Ceph中的一切都以对象的形式存储，而RADOS就负责存储这些对象，而不考虑它们的数据类型。**RADOS层确保数据一致性和可靠性。对于数据一致性，它执行数据复制、故障检测和恢复，还包括数据在集群节点间的recovery。
+- **Librados**：**Libradio 是RADOS提供库，简化访问RADOS的一种方法，**因为 RADOS 是协议，很难直接访问，因此上层的 RBD、RGW和CephFS都是通过libradios访问的，目前支持PHP、Ruby、Java、Python、C和C++语言。它提供了Ceph存储集群的一个本地接口RADOS，并且是其他服务（如RBD、RGW）的基础，此外，还为CephFS提供POSIX接口。Librados API支持直接访问RADOS，使开发者能够创建自己的接口来访问Ceph集群存储。
+- RBD：RBD全称 RADOS Block Device，是 Ceph 对外提供的块设备服务。对外提供块存储。可以像磁盘一样被映射、格式化和挂载到服务器上。
+- RGW：RGW全称RADOS gateway，Ceph对象网关，是Ceph对外提供的对象存储服务，提供了一个兼容S3和Swift的RESTful API接口。RGW还支持多租户和OpenStack的Keystone身份验证服务。
+- CephFS：CephFS全称Ceph File System，是Ceph对外提供的文件系统服务。提供了一个任意大小且兼容POSlX的分布式文件系统。**CephFS依赖Ceph MDS来跟踪文件层次结构，即元数据。**
 
 **Ceph逻辑单元**
 
@@ -491,8 +491,6 @@ kubectl apply -f ceph/filesystem-test.yaml
 kubectl apply -f ceph/csi/cephfs/storageclass.yaml
 kubectl apply -f ceph/csi/cephfs/kube-registry.yaml
 ```
-
-
 
 ## 测试-块存储
 
