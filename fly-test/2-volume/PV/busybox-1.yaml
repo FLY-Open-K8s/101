@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: busybox
+  name: busybox
+spec:
+  containers:
+  - image: busybox:1.28.3
+    imagePullPolicy: IfNotPresent
+    name: busybox
+    command:
+    - "sleep"
+    - "3600"
+    resources: {}
+    volumeMounts:
+    - name: tmp
+      mountPath: /cache
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  volumes:
+  - name: tmp
+    hostPath:
+      path: /tmp/hostPath
+      type: DirectoryOrCreate
