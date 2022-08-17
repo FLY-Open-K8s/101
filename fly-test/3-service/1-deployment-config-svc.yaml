@@ -33,7 +33,7 @@ spec:
 
 ---
 apiVersion: v1
-kind: ConfigMap
+kind: 1-configmap
 metadata:
    name: nginx-cm
 data:

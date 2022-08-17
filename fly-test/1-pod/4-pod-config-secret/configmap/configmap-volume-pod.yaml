@@ -13,7 +13,7 @@ spec:
   volumes:
     - name: config-volume
       configMap:
-        # Provide the name of the ConfigMap containing the files you want
+        # Provide the name of the 1-configmap containing the files you want
         # to add to the container
         name: special-config
   restartPolicy: Never
