@@ -19,7 +19,7 @@ data:
             root   /usr/share/nginx/html;
         }
     }
-kind: 1-configmap
+kind: ConfigMap
 metadata:
   creationTimestamp: null
   name: nginx-get-conf
