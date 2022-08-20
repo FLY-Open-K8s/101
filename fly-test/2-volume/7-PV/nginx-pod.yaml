@@ -4,7 +4,7 @@ metadata:
   creationTimestamp: null
   labels:
     run: nginx
-  name: nginx
+  name: nginx-pvtest
 spec:
   containers:
   - image: nginx:latest
